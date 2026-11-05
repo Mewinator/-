@@ -63,6 +63,50 @@ export async function getPageTitle(frame) {
     }
 }
 
+// executeScript doesn't wait for promises, so the favicon is fetched in the
+// background and stored on the page's (isolated) window, then polled for.
+const FAVICON_START = `(() => {
+    window.__portalFavicon = 'pending';
+    (async () => {
+        const links = [...document.querySelectorAll('link[rel~="icon"]')];
+        const link = links.find((l) => /\\b32x32\\b/.test(l.sizes)) ||
+            links.find((l) => /\\b16x16\\b/.test(l.sizes)) || links[0];
+        const response = await fetch(link ? link.href : location.origin + '/favicon.ico');
+        if (!response.ok) throw new Error(response.status);
+        const blob = await response.blob();
+        try {
+            const bitmap = await createImageBitmap(blob);
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = 32;
+            canvas.getContext('2d').drawImage(bitmap, 0, 0, 32, 32);
+            window.__portalFavicon = canvas.toDataURL('image/png');
+        } catch {
+            if (!blob.type.startsWith('image/')) throw new Error('Not an image');
+            window.__portalFavicon = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+            });
+        }
+    })().catch(() => { window.__portalFavicon = null; });
+    return 1;
+})()`;
+
+// Returns the page's favicon as a data URL, or null if it can't be read.
+export async function getFavicon(frame) {
+    try {
+        await frame.executeScript({ code: FAVICON_START });
+        for (let i = 0; i < 20; i++) {
+            await new Promise((resolve) => setTimeout(resolve, 150));
+            const [value] = await frame.executeScript({ code: 'window.__portalFavicon' });
+            if (value !== 'pending') return typeof value === 'string' ? value : null;
+        }
+    } catch {
+        // The page navigated away or can't be scripted.
+    }
+    return null;
+}
+
 function handlePermission(e) {
     if (e.permission === 'download' || e.permission === 'fullscreen') {
         e.request.allow();

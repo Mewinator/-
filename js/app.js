@@ -8,6 +8,8 @@ const appView = document.getElementById('app-view');
 const browserView = document.getElementById('browser-view');
 const settingsDialog = document.getElementById('settings-dialog');
 const favicon = document.getElementById('favicon');
+const titlebarIcon = document.getElementById('app-titlebar-icon');
+const titlebarTitle = document.getElementById('app-titlebar-title');
 
 let config = loadConfig();
 let appFrame = null;
@@ -44,7 +46,7 @@ function showSetup() {
 async function startApp() {
     applyIdentity();
     appView.classList.remove('inactive');
-    appFrame = await createFrame(appView, {
+    appFrame = await createFrame(document.getElementById('app-frame-slot'), {
         // Keep the app to a single page: open new windows in place.
         onNewWindow(e) {
             e.window.discard();
@@ -62,8 +64,11 @@ async function startApp() {
 }
 
 function applyIdentity() {
+    const icon = config.icon || '/icon.png';
     document.title = config.title;
-    favicon.href = config.icon || '/icon.png';
+    favicon.href = icon;
+    titlebarIcon.src = icon;
+    titlebarTitle.textContent = config.title;
 }
 
 function toggleBrowser() {

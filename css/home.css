@@ -1,30 +1,49 @@
+/* Colors follow Chrome's light and dark themes (and match chrome-tabs). */
 :root {
+    --frame: #dee1e6;
+    --toolbar: #ffffff;
+    --omnibox: #f1f3f4;
+    --omnibox-hover: #e8eaed;
     --bg: #ffffff;
-    --chrome-bg: #e5e7eb;
-    --toolbar-bg: #f9fafb;
-    --input-bg: #ffffff;
-    --border: #d1d5db;
-    --fg: #1f2937;
-    --muted: #6b7280;
-    --hover: rgba(0, 0, 0, 0.07);
-    --accent: #2563eb;
+    --page-bg: #f8f9fa;
+    --fg: #202124;
+    --muted: #5f6368;
+    --icon: #5f6368;
+    --icon-disabled: #bdc1c6;
+    --hover: rgba(60, 64, 67, 0.08);
+    --pressed: rgba(60, 64, 67, 0.16);
+    --border: #dadce0;
+    --accent: #1a73e8;
     --accent-fg: #ffffff;
-    --danger: #dc2626;
-    color-scheme: light dark;
+    --danger: #d93025;
+    --menu-bg: #ffffff;
+    --menu-hover: #e8eaed;
+    --input-bg: #f1f3f4;
+    color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --bg: #111827;
-        --chrome-bg: #0b1220;
-        --toolbar-bg: #1f2937;
-        --input-bg: #111827;
-        --border: #374151;
-        --fg: #f3f4f6;
-        --muted: #9ca3af;
-        --hover: rgba(255, 255, 255, 0.08);
-        --accent: #3b82f6;
-        --danger: #f87171;
+        --frame: #202124;
+        --toolbar: #323639;
+        --omnibox: #202124;
+        --omnibox-hover: #292a2d;
+        --bg: #202124;
+        --page-bg: #202124;
+        --fg: #e8eaed;
+        --muted: #9aa0a6;
+        --icon: #c4c7c5;
+        --icon-disabled: #5f6368;
+        --hover: rgba(232, 234, 237, 0.08);
+        --pressed: rgba(232, 234, 237, 0.16);
+        --border: #3c4043;
+        --accent: #8ab4f8;
+        --accent-fg: #202124;
+        --danger: #f28b82;
+        --menu-bg: #292a2d;
+        --menu-hover: #3f4042;
+        --input-bg: #303134;
+        color-scheme: dark;
     }
 }
 
@@ -45,7 +64,7 @@ body {
 body {
     background: var(--bg);
     color: var(--fg);
-    font: 13px/1.4 system-ui, sans-serif;
+    font: 13px/1.4 "Segoe UI", system-ui, sans-serif;
 }
 
 controlledframe {
@@ -59,6 +78,8 @@ controlledframe {
 .view {
     position: fixed;
     inset: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .inactive,
@@ -75,51 +96,300 @@ controlledframe {
     height: 256px;
 }
 
-/* Buttons and inputs */
+/* App view */
 
-.icon-button {
-    display: grid;
-    place-items: center;
+.app-titlebar {
+    display: none;
+    align-items: center;
+    gap: 8px;
     flex: none;
-    width: 30px;
-    height: 30px;
-    padding: 0;
-    border: 0;
-    border-radius: 6px;
-    background: transparent;
-    color: inherit;
-    cursor: pointer;
+    height: env(titlebar-area-height, 33px);
+    padding-left: calc(env(titlebar-area-x, 0px) + 10px);
+    padding-right: calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw));
+    background: var(--frame);
+    font-size: 12px;
+    -webkit-app-region: drag;
 }
 
-.icon-button:hover:not(:disabled) {
+@media (display-mode: window-controls-overlay) {
+    .app-titlebar {
+        display: flex;
+    }
+}
+
+.app-titlebar-icon {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+}
+
+.app-titlebar-title {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.app-frame-slot {
+    flex: 1;
+    min-height: 0;
+}
+
+/* Tab strip. In the frameless (window controls overlay) mode it shares the
+   top row with the window buttons and doubles as the window's drag area. */
+
+.tabstrip {
+    flex: none;
+    display: flex;
+    padding-left: env(titlebar-area-x, 0px);
+    padding-right: calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw));
+    background: var(--frame);
+    -webkit-app-region: drag;
+}
+
+.tabstrip .chrome-tabs {
+    flex: 1;
+    min-width: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.tabstrip .chrome-tabs-content {
+    /* Room for the + button and a strip of empty space to drag the window by. */
+    width: calc(100% - 72px);
+}
+
+.chrome-tabs .chrome-tab-content,
+.new-tab-button {
+    -webkit-app-region: no-drag;
+}
+
+.chrome-tabs .chrome-tabs-bottom-bar {
+    background: var(--toolbar);
+}
+
+/* Loading spinner in place of the favicon. */
+.chrome-tabs .chrome-tab.loading .chrome-tab-favicon {
+    background-image: none !important;
+    border: 2px solid var(--accent);
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.new-tab-button {
+    position: absolute;
+    top: 12px;
+    z-index: 6;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--icon);
+    transition: left 120ms ease-in-out;
+}
+
+.new-tab-button:hover {
     background: var(--hover);
 }
 
-.icon-button:disabled {
-    opacity: 0.35;
-    cursor: default;
+.new-tab-button svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
 }
 
-.icon-button svg {
-    width: 18px;
-    height: 18px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+/* Toolbar */
+
+.toolbar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 38px;
+    padding: 0 6px 4px;
+    background: var(--toolbar);
+    border-bottom: 1px solid var(--border);
 }
+
+.tb-button {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--icon);
+}
+
+.tb-button:hover:not(:disabled) {
+    background: var(--hover);
+}
+
+.tb-button:active:not(:disabled),
+.tb-button.pressed {
+    background: var(--pressed);
+}
+
+.tb-button:disabled {
+    color: var(--icon-disabled);
+}
+
+.tb-button svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+
+.toolbar .icon-stop,
+.toolbar.loading .icon-reload {
+    display: none;
+}
+
+.toolbar.loading .icon-stop {
+    display: block;
+}
+
+.omnibox {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    height: 28px;
+    margin: 0 6px;
+    border-radius: 14px;
+    background: var(--omnibox);
+}
+
+.omnibox:hover {
+    background: var(--omnibox-hover);
+}
+
+.omnibox:focus-within {
+    background: var(--toolbar);
+    box-shadow: 0 0 0 2px var(--accent);
+}
+
+.omnibox-icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 28px;
+    height: 28px;
+    margin-left: 2px;
+    color: var(--icon);
+}
+
+.omnibox-icon svg {
+    display: none;
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+.omnibox-icon[data-kind="search"] .icon-search,
+.omnibox-icon[data-kind="secure"] .icon-secure,
+.omnibox-icon[data-kind="insecure"] .icon-insecure {
+    display: block;
+}
+
+.omnibox input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    padding: 0 12px 0 4px;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--fg);
+    font: 14px "Segoe UI", system-ui, sans-serif;
+}
+
+.tab-frames {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    background: var(--bg);
+}
+
+.tab-frames controlledframe {
+    position: absolute;
+    inset: 0;
+    visibility: hidden;
+}
+
+.tab-frames controlledframe.active {
+    visibility: visible;
+}
+
+/* Chrome-style dropdown menu */
+
+.menu {
+    position: absolute;
+    top: 80px;
+    right: 6px;
+    z-index: 20;
+    min-width: 280px;
+    padding: 8px 0;
+    border-radius: 8px;
+    background: var(--menu-bg);
+    box-shadow: 0 2px 6px 2px rgba(60, 64, 67, 0.15), 0 1px 2px rgba(60, 64, 67, 0.3);
+}
+
+.menu button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 32px;
+    padding: 0 24px;
+    border: 0;
+    background: transparent;
+    color: var(--fg);
+    font: inherit;
+    text-align: left;
+}
+
+.menu button:hover,
+.menu button:focus-visible {
+    background: var(--menu-hover);
+    outline: 0;
+}
+
+.menu hr {
+    margin: 8px 0;
+    border: 0;
+    border-top: 1px solid var(--border);
+}
+
+.menu-shortcut {
+    margin-left: auto;
+    padding-left: 24px;
+    color: var(--muted);
+}
+
+/* Buttons and inputs */
 
 .button {
     display: inline-flex;
     align-items: center;
     height: 32px;
-    padding: 0 14px;
+    padding: 0 16px;
     border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--toolbar-bg);
-    color: inherit;
-    font: inherit;
+    border-radius: 16px;
+    background: transparent;
+    color: var(--accent);
+    font: 500 13px "Segoe UI", system-ui, sans-serif;
     cursor: pointer;
     white-space: nowrap;
 }
@@ -132,6 +402,10 @@ controlledframe {
     border-color: var(--accent);
     background: var(--accent);
     color: var(--accent-fg);
+}
+
+.button.primary:hover {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .button.primary:disabled {
@@ -148,8 +422,8 @@ select {
     width: 100%;
     height: 32px;
     padding: 0 10px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
+    border: 1px solid transparent;
+    border-radius: 4px;
     background: var(--input-bg);
     color: inherit;
     font: inherit;
@@ -158,7 +432,7 @@ select {
 input:focus,
 select:focus {
     outline: 2px solid var(--accent);
-    outline-offset: -1px;
+    outline-offset: -2px;
 }
 
 kbd {
@@ -175,16 +449,22 @@ kbd {
     place-items: center;
     min-height: 100%;
     padding: 24px 16px;
+    background: var(--page-bg);
 }
 
 .card {
     width: 100%;
-    max-width: 440px;
+    max-width: 480px;
+    padding: 24px;
+    border-radius: 8px;
+    background: var(--bg);
+    box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
 }
 
 .card h1 {
     margin: 0 0 6px;
     font-size: 20px;
+    font-weight: 400;
 }
 
 .hint {
@@ -214,7 +494,7 @@ kbd {
 }
 
 .field-label {
-    font-weight: 600;
+    font-weight: 500;
 }
 
 .icon-row {
@@ -255,127 +535,16 @@ kbd {
     flex: 1;
 }
 
-/* Browser */
-
-.browser-view {
-    display: flex;
-    flex-direction: column;
-    background: var(--bg);
-}
-
-.tabstrip {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 6px 6px 0;
-    background: var(--chrome-bg);
-}
-
-.tabs {
-    display: flex;
-    gap: 2px;
-    min-width: 0;
-    overflow-x: auto;
-    scrollbar-width: none;
-}
-
-.tab {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex: 0 1 200px;
-    min-width: 100px;
-    height: 32px;
-    padding: 0 6px 0 12px;
-    border-radius: 8px 8px 0 0;
-    color: var(--muted);
-    cursor: default;
-    user-select: none;
-}
-
-.tab:hover {
-    background: var(--hover);
-}
-
-.tab.active {
-    background: var(--toolbar-bg);
-    color: var(--fg);
-}
-
-.tab-title {
-    flex: 1;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.tab.loading .tab-title {
-    opacity: 0.55;
-}
-
-.tab-close {
-    flex: none;
-    width: 20px;
-    height: 20px;
-    padding: 0;
-    border: 0;
-    border-radius: 50%;
-    background: transparent;
-    color: inherit;
-    font-size: 15px;
-    line-height: 1;
-    cursor: pointer;
-}
-
-.tab-close:hover {
-    background: var(--hover);
-}
-
-.toolbar {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    height: 42px;
-    padding: 0 8px;
-    background: var(--toolbar-bg);
-    border-bottom: 1px solid var(--border);
-}
-
-.address {
-    flex: 1;
-    margin: 0 6px;
-}
-
-.address input {
-    height: 30px;
-    padding: 0 14px;
-    border-radius: 15px;
-}
-
-.tab-frames {
-    position: relative;
-    flex: 1;
-}
-
-.tab-frames controlledframe {
-    position: absolute;
-    inset: 0;
-    visibility: hidden;
-}
-
-.tab-frames controlledframe.active {
-    visibility: visible;
-}
-
 /* Settings */
 
 .settings-dialog {
     width: min(460px, calc(100% - 32px));
     padding: 20px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
+    border: 0;
+    border-radius: 8px;
     background: var(--bg);
     color: var(--fg);
+    box-shadow: 0 4px 8px 3px rgba(60, 64, 67, 0.15), 0 1px 3px rgba(60, 64, 67, 0.3);
 }
 
 .settings-dialog::backdrop {
@@ -385,6 +554,7 @@ kbd {
 .settings-dialog h2 {
     margin: 0 0 16px;
     font-size: 17px;
+    font-weight: 400;
 }
 
 .unsupported {

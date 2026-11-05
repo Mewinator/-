@@ -6,9 +6,10 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay"],
   "version": "1.0.2",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "background_color": "#dee1e6",
+  "theme_color": "#dee1e6",
   "icons": [
     {
       "src": "/icon.png",
