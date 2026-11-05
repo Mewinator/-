@@ -1,7 +1,7 @@
 import { TabBrowser } from './browser.js';
 import { DEFAULT_CONFIG, clearAll, loadConfig, saveConfig } from './config.js';
 import { mountConfigForm } from './config-form.js';
-import { createFrame, isHotkey, isSupported, onHotkey } from './frames.js';
+import { APP_SHORTCUTS, BROWSER_SHORTCUTS, createFrame, isSupported, matchShortcut, onShortcut } from './frames.js';
 
 const setupView = document.getElementById('setup-view');
 const appView = document.getElementById('app-view');
@@ -23,12 +23,25 @@ if (!isSupported) {
     showSetup();
 }
 
-onHotkey(toggleBrowser);
+onShortcut(handleShortcut);
 document.addEventListener('keydown', (e) => {
-    if (!isHotkey(e)) return;
+    const name = matchShortcut(e, browserOpen() ? BROWSER_SHORTCUTS : APP_SHORTCUTS);
+    if (!name) return;
     e.preventDefault();
-    toggleBrowser();
+    handleShortcut(name);
 }, true);
+
+function browserOpen() {
+    return !browserView.classList.contains('inactive');
+}
+
+function handleShortcut(name) {
+    if (name === 'toggle-browser') {
+        toggleBrowser();
+    } else if (browserOpen()) {
+        browser.handleShortcut(name);
+    }
+}
 
 function showSetup() {
     setupView.hidden = false;
@@ -47,6 +60,7 @@ async function startApp() {
     applyIdentity();
     appView.classList.remove('inactive');
     appFrame = await createFrame(document.getElementById('app-frame-slot'), {
+        shortcuts: APP_SHORTCUTS,
         // Keep the app to a single page: open new windows in place.
         onNewWindow(e) {
             e.window.discard();

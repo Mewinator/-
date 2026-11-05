@@ -1,9 +1,8 @@
+import { Bookmarks } from './bookmarks.js';
 import { loadTabs, newTabPage, saveTabs, toUrl } from './config.js';
 import { createFrame, getFavicon, getPageTitle } from './frames.js';
-
-export const DEFAULT_FAVICON = 'data:image/svg+xml,' + encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#80868b"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>',
-);
+import { DEFAULT_FAVICON } from './icons.js';
+import { hidePopup, togglePopup } from './popups.js';
 
 // Favicons already seen this session, by origin, so tabs show them right away.
 const faviconCache = new Map();
@@ -37,9 +36,34 @@ export class TabBrowser {
         this.menu = root.querySelector('#app-menu');
         this.menuButton = root.querySelector('#menu-button');
 
+        this.bookmarks = new Bookmarks(root, {
+            open: (url, options) => this.openUrl(url, options),
+            onBarToggle: (visible) => {
+                this.menu.querySelector('[data-action="toggle-bookmarks-bar"]')
+                    ?.setAttribute('aria-checked', String(visible));
+            },
+        });
         this.#setUpTabStrip(root);
         this.#setUpToolbar(root);
         this.#setUpMenu({ onSettings, onExit });
+        this.menu.querySelector('[data-action="toggle-bookmarks-bar"]')
+            .setAttribute('aria-checked', String(this.bookmarks.barVisible));
+    }
+
+    handleShortcut(name) {
+        if (name === 'bookmark') this.bookmarks.bookmarkCurrent();
+        if (name === 'bookmarks-bar') this.bookmarks.setBarVisible(!this.bookmarks.barVisible);
+        if (name === 'focus-address') this.address.focus();
+    }
+
+    // Opens a URL in the current tab, or a new one.
+    async openUrl(url, { newTab = false, background = false } = {}) {
+        if (newTab || !this.#active) {
+            await this.newTab(url, { activate: !background });
+        } else {
+            this.#active.frame.src = url;
+            this.#active.frame.focus();
+        }
     }
 
     #setUpTabStrip(root) {
@@ -119,30 +143,20 @@ export class TabBrowser {
                 await this.newTab();
                 this.address.focus();
             },
+            'bookmark-tab': () => this.bookmarks.bookmarkCurrent(),
+            'toggle-bookmarks-bar': () => this.bookmarks.setBarVisible(!this.bookmarks.barVisible),
             settings: onSettings,
             exit: onExit,
         };
-        this.menuButton.addEventListener('click', () => this.#toggleMenu());
+        this.menuButton.addEventListener('click', () => {
+            togglePopup(this.menu, { anchor: this.menuButton, align: 'right' });
+        });
         this.menu.addEventListener('click', (e) => {
             const item = e.target.closest('[data-action]');
             if (!item) return;
-            this.#toggleMenu(false);
+            hidePopup();
             actions[item.dataset.action]?.();
         });
-        document.addEventListener('pointerdown', (e) => {
-            if (!this.menu.hidden && !e.target.closest('#app-menu, #menu-button')) this.#toggleMenu(false);
-        });
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !this.menu.hidden) this.#toggleMenu(false);
-        });
-        // Clicking into a page doesn't reach this document, but it does blur it.
-        addEventListener('blur', () => this.#toggleMenu(false));
-    }
-
-    #toggleMenu(open = this.menu.hidden) {
-        this.menu.hidden = !open;
-        this.menuButton.setAttribute('aria-expanded', String(open));
-        this.menuButton.classList.toggle('pressed', open);
     }
 
     async show() {
@@ -206,7 +220,10 @@ export class TabBrowser {
             tab.url = e.url;
             const cached = faviconCache.get(originOf(e.url));
             if (cached) this.#update(tab, { favicon: cached });
-            if (tab === this.#active) this.#showAddress();
+            if (tab === this.#active) {
+                this.#showAddress();
+                this.bookmarks.setCurrent(tab);
+            }
             this.#persist();
         });
         frame.addEventListener('loadstop', async () => {
@@ -233,6 +250,7 @@ export class TabBrowser {
         if (!tab.el) return;
         this.#chromeTabs.updateTab(tab.el, { title: tab.title, favicon: tab.favicon });
         tab.el.querySelector('.chrome-tab-content').title = tab.title;
+        if (tab === this.#active) this.bookmarks.setCurrent(tab);
         this.#persist();
     }
 
@@ -248,6 +266,7 @@ export class TabBrowser {
         tab.frame.classList.add('active');
         this.toolbar.classList.toggle('loading', tab.loading);
         this.#showAddress();
+        this.bookmarks.setCurrent(tab);
         this.#updateNavButtons();
         this.#persist();
     }
@@ -257,7 +276,10 @@ export class TabBrowser {
         if (!tab) return;
         this.#tabs.delete(tab.el);
         tab.frame.remove();
-        if (tab === this.#active) this.#active = null;
+        if (tab === this.#active) {
+            this.#active = null;
+            this.bookmarks.setCurrent(null);
+        }
         this.#placeNewTabButton();
 
         if (this.#tabs.size === 0) {
@@ -268,14 +290,8 @@ export class TabBrowser {
     }
 
     async #navigate(input) {
-        const url = toUrl(input, this.getConfig());
-        if (this.#active) {
-            this.#active.frame.src = url;
-        } else {
-            await this.newTab(url);
-        }
         this.address.blur();
-        this.#active.frame.focus();
+        await this.openUrl(toUrl(input, this.getConfig()));
     }
 
     #showAddress() {

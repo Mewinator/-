@@ -316,6 +316,162 @@ controlledframe {
     font: 14px "Segoe UI", system-ui, sans-serif;
 }
 
+/* Bookmark star */
+
+.omnibox-star {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 24px;
+    height: 24px;
+    margin-right: 4px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--icon);
+}
+
+.omnibox-star:hover,
+.omnibox-star.pressed {
+    background: var(--hover);
+}
+
+.omnibox-star svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+.omnibox-star .icon-star-filled,
+.omnibox-star.on .icon-star-outline {
+    display: none;
+}
+
+.omnibox-star.on {
+    color: var(--accent);
+}
+
+.omnibox-star.on .icon-star-filled {
+    display: block;
+}
+
+/* Bookmarks bar */
+
+.browser-view.show-bookmarks .toolbar {
+    border-bottom: 0;
+}
+
+.bookmarks-bar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    height: 30px;
+    padding: 0 8px 2px;
+    background: var(--toolbar);
+    border-bottom: 1px solid var(--border);
+}
+
+.bookmarks-items {
+    position: relative;
+    flex: 1;
+    display: flex;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.bookmarks-empty {
+    display: none;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.bookmarks-bar.empty .bookmarks-empty {
+    display: block;
+}
+
+.bookmark {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: none;
+    max-width: 160px;
+    height: 28px;
+    padding: 0 8px;
+    border: 0;
+    border-radius: 14px;
+    background: transparent;
+    color: var(--fg);
+    font: 12px "Segoe UI", system-ui, sans-serif;
+}
+
+.bookmark:hover {
+    background: var(--hover);
+}
+
+.bookmark img {
+    flex: none;
+    width: 16px;
+    height: 16px;
+}
+
+.bookmark span {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.bookmarks-overflow {
+    width: 24px;
+    height: 24px;
+}
+
+.bookmarks-overflow svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Bookmarks in the » menu fill its width. */
+.bookmarks-menu .bookmark {
+    width: 100%;
+    max-width: 320px;
+    height: 32px;
+    padding: 0 16px;
+    border-radius: 0;
+    font-size: 13px;
+}
+
+/* Bookmark bubble */
+
+.bubble {
+    position: fixed;
+    z-index: 20;
+    width: 320px;
+    padding: 16px 20px;
+    border-radius: 8px;
+    background: var(--menu-bg);
+    box-shadow: 0 2px 6px 2px rgba(60, 64, 67, 0.15), 0 1px 2px rgba(60, 64, 67, 0.3);
+}
+
+.bubble-title {
+    margin: 0 0 16px;
+    font-size: 15px;
+    font-weight: 400;
+}
+
+.bubble-field {
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    color: var(--muted);
+}
+
+.bubble-field input {
+    color: var(--fg);
+}
+
 .tab-frames {
     position: relative;
     flex: 1;
@@ -336,9 +492,7 @@ controlledframe {
 /* Chrome-style dropdown menu */
 
 .menu {
-    position: absolute;
-    top: 80px;
-    right: 6px;
+    position: fixed;
     z-index: 20;
     min-width: 280px;
     padding: 8px 0;
@@ -370,6 +524,21 @@ controlledframe {
     margin: 8px 0;
     border: 0;
     border-top: 1px solid var(--border);
+}
+
+.menu button[role="menuitemcheckbox"] {
+    position: relative;
+}
+
+.menu button[aria-checked="true"]::before {
+    content: "";
+    position: absolute;
+    left: 7px;
+    width: 10px;
+    height: 5px;
+    border-left: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: translateY(-2px) rotate(-45deg);
 }
 
 .menu-shortcut {

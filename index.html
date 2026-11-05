@@ -67,10 +67,23 @@
                     </span>
                     <input id="address" type="text" placeholder="Search Google or type a URL"
                         aria-label="Address and search bar" autocomplete="off" spellcheck="false">
+                    <button id="bookmark-star" class="omnibox-star" type="button" title="Bookmark this tab"
+                        aria-label="Bookmark this tab" aria-pressed="false" hidden>
+                        <svg class="icon-star-outline" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z"/></svg>
+                        <svg class="icon-star-filled" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                    </button>
                 </form>
                 <button id="menu-button" class="tb-button" type="button" title="Customize and control Portal"
                     aria-label="Menu" aria-haspopup="menu" aria-expanded="false">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                </button>
+            </div>
+            <div id="bookmarks-bar" class="bookmarks-bar">
+                <div id="bookmarks-items" class="bookmarks-items"></div>
+                <span class="bookmarks-empty">For quick access, place your bookmarks here on the bookmarks bar.</span>
+                <button id="bookmarks-overflow" class="tb-button bookmarks-overflow" type="button"
+                    title="More bookmarks" aria-label="More bookmarks" aria-haspopup="menu" hidden>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.59 7.41 10.18 12l-4.59 4.59L7 18l6-6-6-6zM12.59 7.41 17.18 12l-4.59 4.59L14 18l6-6-6-6z"/></svg>
                 </button>
             </div>
             <div id="tab-frames" class="tab-frames"></div>
@@ -78,10 +91,44 @@
             <div id="app-menu" class="menu" role="menu" hidden>
                 <button type="button" role="menuitem" data-action="new-tab">New tab</button>
                 <hr>
+                <button type="button" role="menuitem" data-action="bookmark-tab">
+                    Bookmark this tab… <span class="menu-shortcut">Ctrl+D</span>
+                </button>
+                <button type="button" role="menuitemcheckbox" data-action="toggle-bookmarks-bar" aria-checked="true">
+                    Show bookmarks bar <span class="menu-shortcut">Ctrl+Shift+B</span>
+                </button>
+                <hr>
                 <button type="button" role="menuitem" data-action="settings">Settings</button>
                 <button type="button" role="menuitem" data-action="exit">
                     Back to app <span class="menu-shortcut">Ctrl+Shift+Alt+Enter</span>
                 </button>
+            </div>
+
+            <div id="bookmarks-overflow-menu" class="menu bookmarks-menu" role="menu" hidden></div>
+
+            <div id="bookmark-menu" class="menu" role="menu" hidden>
+                <button type="button" role="menuitem" data-action="open">Open</button>
+                <button type="button" role="menuitem" data-action="open-new-tab">Open in new tab</button>
+                <hr>
+                <button type="button" role="menuitem" data-action="edit">Edit…</button>
+                <button type="button" role="menuitem" data-action="delete">Delete</button>
+            </div>
+
+            <div id="bookmark-bubble" class="bubble" role="dialog" aria-labelledby="bookmark-bubble-title" hidden>
+                <h2 id="bookmark-bubble-title" class="bubble-title">Bookmark added</h2>
+                <label class="bubble-field">
+                    <span>Name</span>
+                    <input id="bookmark-name" autocomplete="off">
+                </label>
+                <label class="bubble-field">
+                    <span>URL</span>
+                    <input id="bookmark-url" autocomplete="off" spellcheck="false">
+                </label>
+                <div class="form-actions">
+                    <span class="spacer"></span>
+                    <button id="bookmark-remove" type="button" class="button">Remove</button>
+                    <button id="bookmark-done" type="button" class="button primary">Done</button>
+                </div>
             </div>
         </div>
 

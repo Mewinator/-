@@ -1,38 +1,62 @@
 // Shared setup for every <controlledframe> in the app.
 
-const HOTKEY_TOKEN = `iwa-hotkey-${crypto.randomUUID()}`;
+const SHORTCUT_TOKEN = `iwa-shortcut-${crypto.randomUUID()}:`;
+
+export const SHORTCUTS = {
+    'toggle-browser': { key: 'Enter', ctrl: true, shift: true, alt: true },
+    bookmark: { key: 'd', ctrl: true },
+    'bookmarks-bar': { key: 'b', ctrl: true, shift: true },
+    'focus-address': { key: 'l', ctrl: true },
+};
+
+// The app's own site only gets the hotkey; browser tabs get every shortcut.
+export const APP_SHORTCUTS = ['toggle-browser'];
+export const BROWSER_SHORTCUTS = Object.keys(SHORTCUTS);
+
+// Returns the name of the shortcut `e` matches among `names`, if any.
+export function matchShortcut(e, names = BROWSER_SHORTCUTS) {
+    const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    return names.find((name) => {
+        const s = SHORTCUTS[name];
+        return s.key === key && !!s.ctrl === e.ctrlKey && !!s.shift === e.shiftKey &&
+            !!s.alt === e.altKey && !e.metaKey;
+    });
+}
 
 // Key presses inside a frame never reach this page, so a content script in the
-// frame watches for the hotkey and reports it through the console.
-const HOTKEY_SCRIPT = `addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && e.ctrlKey && e.shiftKey && e.altKey) {
+// frame watches for shortcuts and reports them through the console.
+function shortcutScript(names) {
+    return `(() => {
+    const matchShortcut = ${matchShortcut.toString()};
+    const SHORTCUTS = ${JSON.stringify(SHORTCUTS)};
+    const names = ${JSON.stringify(names)};
+    addEventListener('keydown', (e) => {
+        const name = matchShortcut(e, names);
+        if (!name) return;
         e.preventDefault();
         e.stopImmediatePropagation();
-        console.log(${JSON.stringify(HOTKEY_TOKEN)});
-    }
-}, true);`;
+        console.log(${JSON.stringify(SHORTCUT_TOKEN)} + name);
+    }, true);
+})();`;
+}
 
 // Outside an Isolated Web App the <controlledframe> tag is just an unknown element.
 export const isSupported = !(document.createElement('controlledframe') instanceof HTMLUnknownElement);
 
-let hotkeyListener = () => {};
+let shortcutListener = () => {};
 
-export function onHotkey(listener) {
-    hotkeyListener = listener;
-}
-
-export function isHotkey(e) {
-    return e.key === 'Enter' && e.ctrlKey && e.shiftKey && e.altKey;
+export function onShortcut(listener) {
+    shortcutListener = listener;
 }
 
 // Creates a frame inside `parent`. Set `src` on the result to load a page.
-export async function createFrame(parent, { onNewWindow, partition = 'persist:main' }) {
+export async function createFrame(parent, { onNewWindow, shortcuts = BROWSER_SHORTCUTS, partition = 'persist:main' }) {
     const frame = document.createElement('controlledframe');
     frame.setAttribute('partition', partition);
     parent.append(frame);
 
     frame.addEventListener('consolemessage', (e) => {
-        if (e.message === HOTKEY_TOKEN) hotkeyListener();
+        if (e.message.startsWith(SHORTCUT_TOKEN)) shortcutListener(e.message.slice(SHORTCUT_TOKEN.length));
     });
     frame.addEventListener('newwindow', onNewWindow);
     frame.addEventListener('permissionrequest', handlePermission);
@@ -42,14 +66,14 @@ export async function createFrame(parent, { onNewWindow, partition = 'persist:ma
         // Controlled Frame uses web-style names (urlPatterns, runAt, allFrames),
         // not <webview>'s matches/run_at/all_frames.
         await frame.addContentScripts([{
-            name: 'hotkey',
+            name: 'shortcuts',
             urlPatterns: ['http://*/*', 'https://*/*'],
-            js: { code: HOTKEY_SCRIPT },
+            js: { code: shortcutScript(shortcuts) },
             runAt: 'document-start',
             allFrames: true,
         }]);
     } catch (err) {
-        console.warn('Could not add the hotkey script to the frame:', err);
+        console.warn('Could not add the shortcut script to the frame:', err);
     }
     return frame;
 }
