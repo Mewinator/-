@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // Everything that ships in the app. Paths are relative to the project root.
-const APP_ENTRIES = ['index.html', 'icon.png', 'css', 'js', '.well-known'];
+const APP_ENTRIES = ['index.html', 'icon.png', 'css', 'js', 'vendor', '.well-known'];
 
 const MIME_TYPES = {
     '.html': 'text/html; charset=utf-8',
