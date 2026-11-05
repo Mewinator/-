@@ -6,7 +6,6 @@ import { APP_SHORTCUTS, BROWSER_SHORTCUTS, createFrame, isSupported, matchShortc
 const setupView = document.getElementById('setup-view');
 const appView = document.getElementById('app-view');
 const browserView = document.getElementById('browser-view');
-const settingsDialog = document.getElementById('settings-dialog');
 const favicon = document.getElementById('favicon');
 const titlebarIcon = document.getElementById('app-titlebar-icon');
 const titlebarTitle = document.getElementById('app-titlebar-title');
@@ -72,7 +71,7 @@ async function startApp() {
 
     browser = new TabBrowser(browserView, {
         getConfig: () => config,
-        onSettings: openSettings,
+        renderSettings,
         onExit: toggleBrowser,
     });
 }
@@ -86,7 +85,7 @@ function applyIdentity() {
 }
 
 function toggleBrowser() {
-    if (!browser || settingsDialog.open) return;
+    if (!browser) return;
     const opening = browserView.classList.contains('inactive');
     browserView.classList.toggle('inactive', !opening);
     appView.classList.toggle('inactive', opening);
@@ -97,8 +96,15 @@ function toggleBrowser() {
     }
 }
 
-function openSettings() {
-    mountConfigForm(document.getElementById('settings-form-slot'), {
+const settingsTemplate = document.getElementById('settings-page-template');
+
+// Fills the browser's settings tab (portal://settings).
+function renderSettings(page) {
+    page.replaceChildren(settingsTemplate.content.cloneNode(true));
+    const toast = page.querySelector('.toast');
+    let toastTimer;
+
+    mountConfigForm(page.querySelector('.settings-form-slot'), {
         mode: 'settings',
         config,
         onSave(newConfig) {
@@ -106,16 +112,18 @@ function openSettings() {
             store(newConfig);
             applyIdentity();
             if (siteChanged) appFrame.src = config.siteUrl;
-            settingsDialog.close();
+            toast.hidden = false;
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => (toast.hidden = true), 3000);
         },
-        onCancel: () => settingsDialog.close(),
+        // Throw away unsaved edits.
+        onCancel: () => renderSettings(page),
         onReset() {
-            if (!confirm('Reset everything? This clears the title, icon, website, and saved tabs.')) return;
+            if (!confirm('Reset everything? This clears the title, icon, website, bookmarks, and saved tabs.')) return;
             clearAll();
             location.reload();
         },
     });
-    settingsDialog.showModal();
 }
 
 function store(newConfig) {

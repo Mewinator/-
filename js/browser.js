@@ -7,6 +7,14 @@ import { hidePopup, togglePopup } from './popups.js';
 // Favicons already seen this session, by origin, so tabs show them right away.
 const faviconCache = new Map();
 
+export const SETTINGS_URL = 'portal://settings';
+
+const SETTINGS_FAVICON = 'data:image/svg+xml,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#1a73e8"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>',
+);
+
+const isInternal = (url) => typeof url === 'string' && url.startsWith('portal://');
+
 function originOf(url) {
     try {
         return new URL(url).origin;
@@ -23,8 +31,9 @@ export class TabBrowser {
     #started = false;
     #chromeTabs = new window.ChromeTabs();
 
-    constructor(root, { getConfig, onSettings, onExit }) {
+    constructor(root, { getConfig, renderSettings, onExit }) {
         this.getConfig = getConfig;
+        this.renderSettings = renderSettings;
         this.tabsEl = root.querySelector('.chrome-tabs');
         this.frames = root.querySelector('#tab-frames');
         this.toolbar = root.querySelector('.toolbar');
@@ -45,7 +54,7 @@ export class TabBrowser {
         });
         this.#setUpTabStrip(root);
         this.#setUpToolbar(root);
-        this.#setUpMenu({ onSettings, onExit });
+        this.#setUpMenu({ onExit });
         this.menu.querySelector('[data-action="toggle-bookmarks-bar"]')
             .setAttribute('aria-checked', String(this.bookmarks.barVisible));
     }
@@ -58,11 +67,25 @@ export class TabBrowser {
 
     // Opens a URL in the current tab, or a new one.
     async openUrl(url, { newTab = false, background = false } = {}) {
-        if (newTab || !this.#active) {
+        if (isInternal(url)) {
+            this.openSettings();
+        } else if (newTab || !this.#active) {
             await this.newTab(url, { activate: !background });
         } else {
-            this.#active.frame.src = url;
-            this.#active.frame.focus();
+            const tab = this.#active;
+            if (!tab.frame) await this.#becomeFrame(tab);
+            tab.frame.src = url;
+            tab.frame.focus();
+        }
+    }
+
+    // Switches to the settings tab, opening one if needed.
+    openSettings() {
+        const existing = this.#orderedTabs().find((tab) => tab.page);
+        if (existing) {
+            this.#chromeTabs.setCurrentTab(existing.el);
+        } else {
+            this.newTab(SETTINGS_URL);
         }
     }
 
@@ -112,12 +135,15 @@ export class TabBrowser {
     }
 
     #setUpToolbar(root) {
-        this.backButton.addEventListener('click', () => this.#active?.frame.back());
-        this.forwardButton.addEventListener('click', () => this.#active?.frame.forward());
+        this.backButton.addEventListener('click', () => this.#active?.frame?.back());
+        this.forwardButton.addEventListener('click', () => this.#active?.frame?.forward());
         root.querySelector('#reload').addEventListener('click', () => {
             const tab = this.#active;
-            if (!tab) return;
-            tab.loading ? tab.frame.stop() : tab.frame.reload();
+            if (tab?.page) {
+                this.renderSettings(tab.page);
+            } else if (tab) {
+                tab.loading ? tab.frame.stop() : tab.frame.reload();
+            }
         });
 
         root.querySelector('#address-form').addEventListener('submit', (e) => {
@@ -132,12 +158,12 @@ export class TabBrowser {
         this.address.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 this.address.blur();
-                this.#active?.frame.focus();
+                this.#active?.view.focus();
             }
         });
     }
 
-    #setUpMenu({ onSettings, onExit }) {
+    #setUpMenu({ onExit }) {
         const actions = {
             'new-tab': async () => {
                 await this.newTab();
@@ -145,7 +171,7 @@ export class TabBrowser {
             },
             'bookmark-tab': () => this.bookmarks.bookmarkCurrent(),
             'toggle-bookmarks-bar': () => this.bookmarks.setBarVisible(!this.bookmarks.barVisible),
-            settings: onSettings,
+            settings: () => this.openSettings(),
             exit: onExit,
         };
         this.menuButton.addEventListener('click', () => {
@@ -176,7 +202,7 @@ export class TabBrowser {
             }
         }
         this.#placeNewTabButton();
-        this.#active?.frame.focus();
+        this.#active?.view.focus();
     }
 
     async newTab(url = newTabPage(this.getConfig()), { activate = true, title, favicon } = {}) {
@@ -187,8 +213,11 @@ export class TabBrowser {
             loading: false,
             loadId: 0,
         };
-        tab.frame = await createFrame(this.frames, { onNewWindow: (e) => this.#adoptWindow(e) });
-        this.#watch(tab);
+        if (isInternal(url)) {
+            this.#becomePage(tab);
+        } else {
+            await this.#becomeFrame(tab);
+        }
 
         this.#adding = tab;
         this.#chromeTabs.addTab({ title: tab.title, favicon: tab.favicon }, { background: !activate });
@@ -196,10 +225,31 @@ export class TabBrowser {
         tab.el.querySelector('.chrome-tab-content').title = tab.title;
         if (!this.#active) this.#chromeTabs.setCurrentTab(tab.el);
 
-        if (url) tab.frame.src = url;
+        if (url && tab.frame) tab.frame.src = url;
         this.#placeNewTabButton();
         this.#persist();
         return tab;
+    }
+
+    // A tab shows either a web page (a frame) or the settings page (a div).
+    async #becomeFrame(tab) {
+        const active = tab.view?.classList.contains('active');
+        tab.page?.remove();
+        tab.page = null;
+        tab.frame = await createFrame(this.frames, { onNewWindow: (e) => this.#adoptWindow(e) });
+        tab.view = tab.frame;
+        tab.view.classList.toggle('active', !!active);
+        this.#watch(tab);
+    }
+
+    #becomePage(tab) {
+        tab.page = document.createElement('div');
+        tab.page.className = 'internal-page';
+        tab.page.tabIndex = -1;
+        tab.view = tab.page;
+        this.frames.append(tab.page);
+        this.renderSettings(tab.page);
+        Object.assign(tab, { url: SETTINGS_URL, title: 'Settings', favicon: SETTINGS_FAVICON });
     }
 
     // Pages that open a new window (target="_blank", window.open) get a new tab.
@@ -261,9 +311,9 @@ export class TabBrowser {
     }
 
     #activate(tab) {
-        this.#active?.frame.classList.remove('active');
+        this.#active?.view.classList.remove('active');
         this.#active = tab;
-        tab.frame.classList.add('active');
+        tab.view.classList.add('active');
         this.toolbar.classList.toggle('loading', tab.loading);
         this.#showAddress();
         this.bookmarks.setCurrent(tab);
@@ -275,7 +325,7 @@ export class TabBrowser {
     #removed(tab) {
         if (!tab) return;
         this.#tabs.delete(tab.el);
-        tab.frame.remove();
+        tab.view.remove();
         if (tab === this.#active) {
             this.#active = null;
             this.bookmarks.setCurrent(null);
@@ -291,7 +341,8 @@ export class TabBrowser {
 
     async #navigate(input) {
         this.address.blur();
-        await this.openUrl(toUrl(input, this.getConfig()));
+        const text = input.trim();
+        await this.openUrl(isInternal(text) ? text : toUrl(text, this.getConfig()));
     }
 
     #showAddress() {
@@ -303,7 +354,7 @@ export class TabBrowser {
         const url = this.#active?.url ?? '';
         let kind = 'search';
         if (document.activeElement !== this.address && url) {
-            kind = url.startsWith('https:') ? 'secure' : 'insecure';
+            kind = isInternal(url) ? 'internal' : url.startsWith('https:') ? 'secure' : 'insecure';
         }
         this.siteInfo.dataset.kind = kind;
     }

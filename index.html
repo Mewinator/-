@@ -63,6 +63,7 @@
                     <span id="site-info" class="omnibox-icon" data-kind="search" aria-hidden="true">
                         <svg class="icon-search" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
                         <svg class="icon-secure" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                        <img class="icon-internal" src="/icon.png" alt="">
                         <svg class="icon-insecure" viewBox="0 0 24 24"><path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
                     </span>
                     <input id="address" type="text" placeholder="Search Google or type a URL"
@@ -132,50 +133,70 @@
             </div>
         </div>
 
-        <dialog id="settings-dialog" class="settings-dialog">
-            <h2>Settings</h2>
-            <div id="settings-form-slot"></div>
-        </dialog>
-
         <p id="unsupported" class="unsupported" hidden>
             Controlled Frame isn't available. Install and open this app as an
             Isolated Web App in Chrome.
         </p>
 
+        <template id="settings-page-template">
+            <div class="settings-page">
+                <header class="settings-header">
+                    <img src="/icon.png" alt="">
+                    <h1>Settings</h1>
+                </header>
+                <main class="settings-main">
+                    <div class="settings-form-slot"></div>
+                </main>
+                <div class="toast" role="status" hidden>Settings saved</div>
+            </div>
+        </template>
+
         <template id="config-form-template">
             <form class="config-form">
-                <label class="field">
-                    <span class="field-label">Title</span>
-                    <input name="title" required placeholder="Shown in the window title" autocomplete="off">
-                </label>
-                <div class="field">
-                    <span class="field-label">Icon</span>
-                    <div class="icon-row">
-                        <img class="icon-preview" alt="">
-                        <input name="iconUrl" aria-label="Icon URL" placeholder="https://example.com/icon.png"
-                            autocomplete="off" inputmode="url">
-                        <label class="button">Upload<input name="iconFile" type="file" accept="image/*" hidden></label>
-                    </div>
-                    <small class="icon-status" aria-live="polite"></small>
-                </div>
-                <label class="field">
-                    <span class="field-label">Website URL</span>
-                    <input name="siteUrl" required placeholder="https://example.com" autocomplete="off" inputmode="url">
-                </label>
-                <div class="settings-only">
+                <fieldset class="form-section">
+                    <legend>Appearance</legend>
                     <label class="field">
-                        <span class="field-label">Search engine</span>
+                        <span class="field-label">Title</span>
+                        <input name="title" required placeholder="Shown in the window title" autocomplete="off">
+                    </label>
+                    <div class="field">
+                        <span class="field-label">Icon</span>
+                        <div class="field-control">
+                            <div class="icon-row">
+                                <img class="icon-preview" alt="">
+                                <input name="iconUrl" aria-label="Icon URL" placeholder="https://example.com/icon.png"
+                                    autocomplete="off" inputmode="url">
+                                <label class="button">Upload<input name="iconFile" type="file" accept="image/*" hidden></label>
+                            </div>
+                            <small class="icon-status" aria-live="polite"></small>
+                        </div>
+                    </div>
+                </fieldset>
+                <fieldset class="form-section">
+                    <legend>On startup</legend>
+                    <label class="field">
+                        <span class="field-label">Website URL</span>
+                        <input name="siteUrl" required placeholder="https://example.com" autocomplete="off" inputmode="url">
+                    </label>
+                </fieldset>
+                <fieldset class="form-section settings-only">
+                    <legend>Search engine</legend>
+                    <label class="field">
+                        <span class="field-label">Search engine used in the address bar</span>
                         <select name="searchEngine"></select>
                     </label>
                     <label class="field custom-search">
                         <span class="field-label">Custom search URL</span>
                         <input name="customSearch" placeholder="https://example.com/search?q=%s" autocomplete="off">
                     </label>
+                </fieldset>
+                <fieldset class="form-section settings-only">
+                    <legend>New tab page</legend>
                     <label class="field">
-                        <span class="field-label">New tab page</span>
+                        <span class="field-label">Page opened by new tabs</span>
                         <input name="newTabUrl" placeholder="Search engine home page" autocomplete="off" inputmode="url">
                     </label>
-                </div>
+                </fieldset>
                 <p class="form-error" role="alert"></p>
                 <div class="form-actions">
                     <button type="button" class="button danger settings-only reset">Reset everything</button>

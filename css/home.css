@@ -19,6 +19,7 @@
     --menu-bg: #ffffff;
     --menu-hover: #e8eaed;
     --input-bg: #f1f3f4;
+    --card: #ffffff;
     color-scheme: light;
 }
 
@@ -43,6 +44,7 @@
         --menu-bg: #292a2d;
         --menu-hover: #3f4042;
         --input-bg: #303134;
+        --card: #292a2d;
         color-scheme: dark;
     }
 }
@@ -298,9 +300,16 @@ controlledframe {
     fill: currentColor;
 }
 
+.omnibox-icon img {
+    display: none;
+    width: 16px;
+    height: 16px;
+}
+
 .omnibox-icon[data-kind="search"] .icon-search,
 .omnibox-icon[data-kind="secure"] .icon-secure,
-.omnibox-icon[data-kind="insecure"] .icon-insecure {
+.omnibox-icon[data-kind="insecure"] .icon-insecure,
+.omnibox-icon[data-kind="internal"] .icon-internal {
     display: block;
 }
 
@@ -388,6 +397,11 @@ controlledframe {
 
 .bookmarks-bar.empty .bookmarks-empty {
     display: block;
+    padding-left: 8px;
+}
+
+.bookmarks-bar.empty .bookmarks-items {
+    display: none;
 }
 
 .bookmark {
@@ -479,14 +493,20 @@ controlledframe {
     background: var(--bg);
 }
 
-.tab-frames controlledframe {
+.tab-frames > * {
     position: absolute;
     inset: 0;
     visibility: hidden;
 }
 
-.tab-frames controlledframe.active {
+.tab-frames > .active {
     visibility: visible;
+}
+
+.internal-page {
+    overflow: auto;
+    background: var(--page-bg);
+    outline: 0;
 }
 
 /* Chrome-style dropdown menu */
@@ -648,13 +668,18 @@ kbd {
     gap: 14px;
 }
 
-.config-form[data-mode="setup"] .settings-only {
+.config-form[data-mode="setup"] .settings-only,
+.config-form[data-mode="setup"] legend {
     display: none;
 }
 
-.settings-only {
+.form-section {
     display: grid;
     gap: 14px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
 }
 
 .field {
@@ -704,26 +729,91 @@ kbd {
     flex: 1;
 }
 
-/* Settings */
+/* Settings page (portal://settings), laid out like chrome://settings */
 
-.settings-dialog {
-    width: min(460px, calc(100% - 32px));
-    padding: 20px;
-    border: 0;
-    border-radius: 8px;
-    background: var(--bg);
-    color: var(--fg);
-    box-shadow: 0 4px 8px 3px rgba(60, 64, 67, 0.15), 0 1px 3px rgba(60, 64, 67, 0.3);
+.settings-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 56px;
+    padding: 0 24px;
+    background: var(--toolbar);
+    border-bottom: 1px solid var(--border);
 }
 
-.settings-dialog::backdrop {
-    background: rgba(0, 0, 0, 0.4);
+.settings-header img {
+    width: 24px;
+    height: 24px;
 }
 
-.settings-dialog h2 {
-    margin: 0 0 16px;
-    font-size: 17px;
+.settings-header h1 {
+    margin: 0;
+    font-size: 22px;
     font-weight: 400;
+}
+
+.settings-main {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 8px 16px 64px;
+}
+
+.settings-page .config-form {
+    gap: 0;
+}
+
+.settings-page .form-section {
+    position: relative;
+    gap: 0;
+    margin-top: 44px;
+    border-radius: 8px;
+    background: var(--card);
+    box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+}
+
+.settings-page legend {
+    position: absolute;
+    top: -30px;
+    left: 0;
+    padding: 0;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.settings-page .field {
+    grid-template-columns: 1fr minmax(0, 340px);
+    align-items: center;
+    gap: 16px;
+    min-height: 56px;
+    padding: 10px 20px;
+    border-top: 1px solid var(--border);
+}
+
+.settings-page legend + .field {
+    border-top: 0;
+}
+
+.settings-page .field-label {
+    font-weight: 400;
+}
+
+.settings-page .form-error {
+    margin-top: 16px;
+}
+
+.settings-page .form-actions {
+    margin-top: 24px;
+}
+
+.toast {
+    position: fixed;
+    left: 24px;
+    bottom: 24px;
+    padding: 14px 24px;
+    border-radius: 4px;
+    background: #323232;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .unsupported {
