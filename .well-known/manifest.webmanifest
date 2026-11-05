@@ -8,6 +8,7 @@
   "display": "standalone",
   "display_override": ["window-controls-overlay"],
   "version": "1.1.0",
+  "update_manifest_url": "https://github.com/Mewinator/-/releases/latest/download/update.json",
   "background_color": "#dee1e6",
   "theme_color": "#dee1e6",
   "icons": [
