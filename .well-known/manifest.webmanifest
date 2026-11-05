@@ -1,0 +1,25 @@
+{
+  "name": "Portal",
+  "short_name": "Portal",
+  "description": "Opens a website of your choice in its own window.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "version": "1.0.1",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "permissions_policy": {
+    "cross-origin-isolated": ["self"],
+    "controlled-frame": ["self"],
+    "fullscreen": ["self"]
+  }
+}

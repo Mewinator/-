@@ -1,0 +1,396 @@
+:root {
+    --bg: #ffffff;
+    --chrome-bg: #e5e7eb;
+    --toolbar-bg: #f9fafb;
+    --input-bg: #ffffff;
+    --border: #d1d5db;
+    --fg: #1f2937;
+    --muted: #6b7280;
+    --hover: rgba(0, 0, 0, 0.07);
+    --accent: #2563eb;
+    --accent-fg: #ffffff;
+    --danger: #dc2626;
+    color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #111827;
+        --chrome-bg: #0b1220;
+        --toolbar-bg: #1f2937;
+        --input-bg: #111827;
+        --border: #374151;
+        --fg: #f3f4f6;
+        --muted: #9ca3af;
+        --hover: rgba(255, 255, 255, 0.08);
+        --accent: #3b82f6;
+        --danger: #f87171;
+    }
+}
+
+* {
+    box-sizing: border-box;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+html,
+body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    background: var(--bg);
+    color: var(--fg);
+    font: 13px/1.4 system-ui, sans-serif;
+}
+
+controlledframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+/* Views stay rendered while hidden so their frames keep their pages. */
+.view {
+    position: fixed;
+    inset: 0;
+}
+
+.inactive,
+.inactive controlledframe {
+    visibility: hidden !important;
+    pointer-events: none;
+}
+
+.offscreen {
+    position: fixed;
+    left: -10000px;
+    top: 0;
+    width: 256px;
+    height: 256px;
+}
+
+/* Buttons and inputs */
+
+.icon-button {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.icon-button:hover:not(:disabled) {
+    background: var(--hover);
+}
+
+.icon-button:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.icon-button svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.button {
+    display: inline-flex;
+    align-items: center;
+    height: 32px;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--toolbar-bg);
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.button:hover {
+    background: var(--hover);
+}
+
+.button.primary {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--accent-fg);
+}
+
+.button.primary:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.button.danger {
+    color: var(--danger);
+}
+
+input,
+select {
+    width: 100%;
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--input-bg);
+    color: inherit;
+    font: inherit;
+}
+
+input:focus,
+select:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+}
+
+kbd {
+    padding: 1px 5px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font: 12px ui-monospace, monospace;
+}
+
+/* Setup */
+
+.setup-view {
+    display: grid;
+    place-items: center;
+    min-height: 100%;
+    padding: 24px 16px;
+}
+
+.card {
+    width: 100%;
+    max-width: 440px;
+}
+
+.card h1 {
+    margin: 0 0 6px;
+    font-size: 20px;
+}
+
+.hint {
+    margin: 0 0 20px;
+    color: var(--muted);
+}
+
+/* Shared title/icon/website form */
+
+.config-form {
+    display: grid;
+    gap: 14px;
+}
+
+.config-form[data-mode="setup"] .settings-only {
+    display: none;
+}
+
+.settings-only {
+    display: grid;
+    gap: 14px;
+}
+
+.field {
+    display: grid;
+    gap: 5px;
+}
+
+.field-label {
+    font-weight: 600;
+}
+
+.icon-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.icon-preview {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    object-fit: contain;
+}
+
+.icon-status {
+    color: var(--muted);
+}
+
+.icon-status:empty,
+.form-error:empty {
+    display: none;
+}
+
+.form-error {
+    margin: 0;
+    color: var(--danger);
+}
+
+.form-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.spacer {
+    flex: 1;
+}
+
+/* Browser */
+
+.browser-view {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+}
+
+.tabstrip {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 6px 0;
+    background: var(--chrome-bg);
+}
+
+.tabs {
+    display: flex;
+    gap: 2px;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 1 200px;
+    min-width: 100px;
+    height: 32px;
+    padding: 0 6px 0 12px;
+    border-radius: 8px 8px 0 0;
+    color: var(--muted);
+    cursor: default;
+    user-select: none;
+}
+
+.tab:hover {
+    background: var(--hover);
+}
+
+.tab.active {
+    background: var(--toolbar-bg);
+    color: var(--fg);
+}
+
+.tab-title {
+    flex: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.tab.loading .tab-title {
+    opacity: 0.55;
+}
+
+.tab-close {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.tab-close:hover {
+    background: var(--hover);
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 42px;
+    padding: 0 8px;
+    background: var(--toolbar-bg);
+    border-bottom: 1px solid var(--border);
+}
+
+.address {
+    flex: 1;
+    margin: 0 6px;
+}
+
+.address input {
+    height: 30px;
+    padding: 0 14px;
+    border-radius: 15px;
+}
+
+.tab-frames {
+    position: relative;
+    flex: 1;
+}
+
+.tab-frames controlledframe {
+    position: absolute;
+    inset: 0;
+    visibility: hidden;
+}
+
+.tab-frames controlledframe.active {
+    visibility: visible;
+}
+
+/* Settings */
+
+.settings-dialog {
+    width: min(460px, calc(100% - 32px));
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--fg);
+}
+
+.settings-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.settings-dialog h2 {
+    margin: 0 0 16px;
+    font-size: 17px;
+}
+
+.unsupported {
+    max-width: 420px;
+    margin: 20vh auto 0;
+    padding: 0 16px;
+    text-align: center;
+    color: var(--muted);
+}

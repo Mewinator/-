@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Set up</title>
+        <link rel="manifest" href="/.well-known/manifest.webmanifest">
+        <link id="favicon" rel="icon" href="/icon.png">
+        <link rel="stylesheet" href="/css/home.css">
+        <script src="/js/app.js" type="module"></script>
+    </head>
+    <body>
+        <main id="setup-view" class="setup-view" hidden>
+            <div class="card">
+                <h1>Set up this app</h1>
+                <p class="hint">
+                    Choose the website this app opens, and the title and icon it uses.
+                    Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Alt</kbd>+<kbd>Enter</kbd>
+                    later to open the browser and change these settings.
+                </p>
+                <div id="setup-form-slot"></div>
+            </div>
+        </main>
+
+        <div id="app-view" class="view inactive"></div>
+
+        <div id="browser-view" class="view browser-view inactive">
+            <div class="tabstrip">
+                <div id="tabs" class="tabs" role="tablist"></div>
+                <button id="new-tab" class="icon-button" type="button" title="New tab" aria-label="New tab">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                </button>
+            </div>
+            <div class="toolbar">
+                <button id="back" class="icon-button" type="button" title="Back" aria-label="Back" disabled>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <button id="forward" class="icon-button" type="button" title="Forward" aria-label="Forward" disabled>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+                <button id="reload" class="icon-button" type="button" title="Reload" aria-label="Reload">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v5h-5"/></svg>
+                </button>
+                <form id="address-form" class="address">
+                    <input id="address" type="text" placeholder="Search or enter address"
+                        aria-label="Search or enter address" autocomplete="off" spellcheck="false">
+                </form>
+                <button id="open-settings" class="icon-button" type="button" title="Settings" aria-label="Settings">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/>
+                        <circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>
+                    </svg>
+                </button>
+                <button id="close-browser" class="icon-button" type="button"
+                    title="Back to app (Ctrl+Shift+Alt+Enter)" aria-label="Back to app">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3"/></svg>
+                </button>
+            </div>
+            <div id="tab-frames" class="tab-frames"></div>
+        </div>
+
+        <dialog id="settings-dialog" class="settings-dialog">
+            <h2>Settings</h2>
+            <div id="settings-form-slot"></div>
+        </dialog>
+
+        <p id="unsupported" class="unsupported" hidden>
+            Controlled Frame isn't available. Install and open this app as an
+            Isolated Web App in Chrome.
+        </p>
+
+        <template id="config-form-template">
+            <form class="config-form">
+                <label class="field">
+                    <span class="field-label">Title</span>
+                    <input name="title" required placeholder="Shown in the window title" autocomplete="off">
+                </label>
+                <div class="field">
+                    <span class="field-label">Icon</span>
+                    <div class="icon-row">
+                        <img class="icon-preview" alt="">
+                        <input name="iconUrl" aria-label="Icon URL" placeholder="https://example.com/icon.png"
+                            autocomplete="off" inputmode="url">
+                        <label class="button">Upload<input name="iconFile" type="file" accept="image/*" hidden></label>
+                    </div>
+                    <small class="icon-status" aria-live="polite"></small>
+                </div>
+                <label class="field">
+                    <span class="field-label">Website URL</span>
+                    <input name="siteUrl" required placeholder="https://example.com" autocomplete="off" inputmode="url">
+                </label>
+                <div class="settings-only">
+                    <label class="field">
+                        <span class="field-label">Search engine</span>
+                        <select name="searchEngine"></select>
+                    </label>
+                    <label class="field custom-search">
+                        <span class="field-label">Custom search URL</span>
+                        <input name="customSearch" placeholder="https://example.com/search?q=%s" autocomplete="off">
+                    </label>
+                    <label class="field">
+                        <span class="field-label">New tab page</span>
+                        <input name="newTabUrl" placeholder="Search engine home page" autocomplete="off" inputmode="url">
+                    </label>
+                </div>
+                <p class="form-error" role="alert"></p>
+                <div class="form-actions">
+                    <button type="button" class="button danger settings-only reset">Reset everything</button>
+                    <span class="spacer"></span>
+                    <button type="button" class="button settings-only cancel">Cancel</button>
+                    <button type="submit" class="button primary">Save</button>
+                </div>
+            </form>
+        </template>
+    </body>
+</html>
