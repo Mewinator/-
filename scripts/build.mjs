@@ -17,6 +17,13 @@ if (!fs.existsSync(keyPath)) {
     process.exit(1);
 }
 
+const privateKey = wbnSign.parsePemKey(fs.readFileSync(keyPath, 'utf-8'));
+
+// Exchanges use full isolated-app://<id>/ URLs. Chrome's developer-mode
+// installer also accepts relative ones, but the regular installer (e.g. on
+// ChromeOS with IWAs enabled in Settings) rejects them.
+const baseURL = new wbnSign.WebBundleId(privateKey).serializeWithIsolatedWebAppOrigin();
+
 const builder = new BundleBuilder('b2');
 for (const file of listAppFiles()) {
     const body = fs.readFileSync(path.join(ROOT, file));
@@ -24,15 +31,14 @@ for (const file of listAppFiles()) {
 
     if (path.posix.basename(file) === 'index.html') {
         // Serve directories at "dir/" and redirect "dir/index.html" there.
-        const dir = `/${path.posix.dirname(file)}/`.replace(/^\/\.\//, '/');
-        builder.addExchange(dir, 200, headers, body);
-        builder.addExchange(`/${file}`, 301, { ...IWA_HEADERS, Location: dir }, '');
+        const dir = path.posix.dirname(file) === '.' ? '' : `${path.posix.dirname(file)}/`;
+        builder.addExchange(baseURL + dir, 200, headers, body);
+        builder.addExchange(baseURL + file, 301, { ...IWA_HEADERS, Location: './' }, '');
     } else {
-        builder.addExchange(`/${file}`, 200, headers, body);
+        builder.addExchange(baseURL + file, 200, headers, body);
     }
 }
 
-const privateKey = wbnSign.parsePemKey(fs.readFileSync(keyPath, 'utf-8'));
 const signed = await wbnSign.SignedWebBundle.fromWebBundle(builder.createBundle(), [
     new wbnSign.NodeCryptoSigningStrategy(privateKey),
 ]);
