@@ -39,12 +39,14 @@ export async function createFrame(parent, { onNewWindow, partition = 'persist:ma
     frame.addEventListener('dialog', handleDialog);
 
     try {
+        // Controlled Frame uses web-style names (urlPatterns, runAt, allFrames),
+        // not <webview>'s matches/run_at/all_frames.
         await frame.addContentScripts([{
             name: 'hotkey',
-            matches: ['<all_urls>'],
+            urlPatterns: ['http://*/*', 'https://*/*'],
             js: { code: HOTKEY_SCRIPT },
-            run_at: 'document_start',
-            all_frames: true,
+            runAt: 'document-start',
+            allFrames: true,
         }]);
     } catch (err) {
         console.warn('Could not add the hotkey script to the frame:', err);
